@@ -24,3 +24,16 @@ export const placeBid = async (itemId: number, amount: number, userId = 1): Prom
   });
   return response.data;
 };
+
+// Add the new function to create auction items
+export interface NewAuctionItem {
+  name: string;
+  description: string;
+  startingPrice: number;
+  auctionEndTime: string;
+}
+
+export const addAuctionItem = async (item: NewAuctionItem): Promise<any> => {
+  const response = await api.post('/items', item);
+  return response.data;
+};
