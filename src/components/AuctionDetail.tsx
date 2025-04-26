@@ -13,26 +13,78 @@ import {
   useTheme,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow, format } from 'date-fns';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import GavelIcon from '@mui/icons-material/Gavel';
-import { getAuctionById } from '../services/api';
+import { getAuctionById, placeBid } from '../services/api';
 
 export const AuctionDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
   const [bidAmount, setBidAmount] = React.useState('');
+  const [snackbar, setSnackbar] = React.useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  
+  const queryClient = useQueryClient();
 
   const { data: auction, isLoading } = useQuery({
     queryKey: ['auction', id],
     queryFn: () => getAuctionById(id),
   });
+
+  const bidMutation = useMutation({
+    mutationFn: (amount: number) => placeBid(Number(id), amount),
+    onSuccess: () => {
+      // Refetch the auction data to get the updated bids
+      queryClient.invalidateQueries({ queryKey: ['auction', id] });
+      setBidAmount('');
+      setSnackbar({
+        open: true,
+        message: 'Bid placed successfully!',
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      console.error('Error placing bid:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to place bid. Please try again.',
+        severity: 'error'
+      });
+    }
+  });
+
+  const handleBidSubmit = () => {
+    if (!bidAmount || parseFloat(bidAmount) <= parseFloat(auction?.currentHighestBid || '0')) {
+      setSnackbar({
+        open: true,
+        message: 'Bid amount must be higher than the current highest bid.',
+        severity: 'error'
+      });
+      return;
+    }
+    
+    bidMutation.mutate(parseFloat(bidAmount));
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   if (isLoading || !auction) {
     return (
@@ -85,24 +137,30 @@ export const AuctionDetail: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Bid History
               </Typography>
-              <List>
-                {auction.bids.map((bid) => (
-                  <ListItem key={bid.id} divider>
-                    <ListItemText
-                      primary={`$${parseFloat(bid.amount).toFixed(2)}`}
-                      secondary={
-                        <React.Fragment>
-                          <Typography component="span" variant="body2" color="text.primary">
-                            {bid.username}
-                          </Typography>
-                          {' - '}
-                          {format(new Date(bid.createdAt), 'PPp')}
-                        </React.Fragment>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
+              {auction.bids.length === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                  No bids have been placed yet. Be the first to bid!
+                </Typography>
+              ) : (
+                <List>
+                  {auction.bids.map((bid) => (
+                    <ListItem key={bid.id} divider>
+                      <ListItemText
+                        primary={`$${parseFloat(bid.amount).toFixed(2)}`}
+                        secondary={
+                          <React.Fragment>
+                            <Typography component="span" variant="body2" color="text.primary">
+                              {bid.username}
+                            </Typography>
+                            {' - '}
+                            {format(new Date(bid.createdAt), 'PPp')}
+                          </React.Fragment>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
             </Paper>
           </Grid>
 
@@ -143,14 +201,20 @@ export const AuctionDetail: React.FC = () => {
                         startAdornment: <Typography>$</Typography>
                       }}
                       sx={{ mb: 2 }}
+                      disabled={bidMutation.isPending}
                     />
                     <Button
                       variant="contained"
                       fullWidth
                       size="large"
-                      disabled={!bidAmount || parseFloat(bidAmount) <= parseFloat(auction.currentHighestBid)}
+                      disabled={
+                        bidMutation.isPending || 
+                        !bidAmount || 
+                        parseFloat(bidAmount) <= parseFloat(auction.currentHighestBid)
+                      }
+                      onClick={handleBidSubmit}
                     >
-                      Place Bid
+                      {bidMutation.isPending ? 'Placing Bid...' : 'Place Bid'}
                     </Button>
                   </Box>
                 )}
@@ -159,6 +223,22 @@ export const AuctionDetail: React.FC = () => {
           </Grid>
         </Grid>
       </Container>
+      
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

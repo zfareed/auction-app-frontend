@@ -15,3 +15,12 @@ export const getAuctionById = async (id: string | undefined): Promise<AuctionDet
   const response = await api.get(`/items/${id}`);
   return response.data;
 };
+
+export const placeBid = async (itemId: number, amount: number, userId = 1): Promise<any> => {
+  const response = await api.post('/bids', {
+    userId,
+    itemId,
+    amount
+  });
+  return response.data;
+};
