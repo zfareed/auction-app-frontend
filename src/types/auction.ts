@@ -19,3 +19,17 @@ export interface AuctionResponse {
     hasPreviousPage: boolean;
   };
 }
+
+export interface Bid {
+  id: number;
+  amount: string;
+  createdAt: string;
+  userId: number;
+  username: string;
+}
+
+export interface AuctionDetail extends Auction {
+  bids: Bid[];
+  timeRemaining: number;
+  status: 'active' | 'ended';
+}

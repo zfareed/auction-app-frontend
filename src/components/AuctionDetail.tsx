@@ -10,7 +10,10 @@ import {
   CircularProgress,
   Divider,
   Stack,
-  useTheme
+  useTheme,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +21,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import GavelIcon from '@mui/icons-material/Gavel';
+import { getAuctionById } from '../services/api';
 
 export const AuctionDetail: React.FC = () => {
   const { id } = useParams();
@@ -27,7 +31,7 @@ export const AuctionDetail: React.FC = () => {
 
   const { data: auction, isLoading } = useQuery({
     queryKey: ['auction', id],
-    queryFn: () => getAuctionById(id), // You'll need to implement this API call
+    queryFn: () => getAuctionById(id),
   });
 
   if (isLoading || !auction) {
@@ -38,7 +42,7 @@ export const AuctionDetail: React.FC = () => {
     );
   }
 
-  const isAuctionEnded = isPast(new Date(auction.auctionEndTime));
+  const isAuctionEnded = auction.status === 'ended';
   const timeRemaining = formatDistanceToNow(new Date(auction.auctionEndTime), { addSuffix: true });
 
   return (
@@ -54,7 +58,7 @@ export const AuctionDetail: React.FC = () => {
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={8}>
-            <Paper sx={{ p: 3, borderRadius: 2 }} elevation={2}>
+            <Paper sx={{ p: 3, borderRadius: 2, mb: 3 }} elevation={2}>
               <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
                 {auction.name}
               </Typography>
@@ -75,6 +79,30 @@ export const AuctionDetail: React.FC = () => {
                   Auction started on {format(new Date(auction.createdAt), 'PPP')}
                 </Typography>
               </Stack>
+            </Paper>
+
+            <Paper sx={{ p: 3, borderRadius: 2 }} elevation={2}>
+              <Typography variant="h6" gutterBottom>
+                Bid History
+              </Typography>
+              <List>
+                {auction.bids.map((bid) => (
+                  <ListItem key={bid.id} divider>
+                    <ListItemText
+                      primary={`$${parseFloat(bid.amount).toFixed(2)}`}
+                      secondary={
+                        <React.Fragment>
+                          <Typography component="span" variant="body2" color="text.primary">
+                            {bid.username}
+                          </Typography>
+                          {' - '}
+                          {format(new Date(bid.createdAt), 'PPp')}
+                        </React.Fragment>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
             </Paper>
           </Grid>
 
