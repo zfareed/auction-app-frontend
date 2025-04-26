@@ -147,8 +147,9 @@ export const Dashboard: React.FC = () => {
                 <Box 
                   sx={{ 
                     width: '100%',
-                    maxWidth: 400,
-                    minWidth: { sm: 300 }
+                    height: '100%',
+                    maxWidth: { xs: '100%', sm: 380 },
+                    minWidth: { xs: '100%', sm: 380 }
                   }}
                 >
                   <AuctionCard auction={auction} />

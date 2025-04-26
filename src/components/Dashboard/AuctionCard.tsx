@@ -65,7 +65,8 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({ auction }) => {
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                minHeight: '2.5em'
+                height: '2.5em',
+                width: '100%'
               }}
             >
               {auction.description}
