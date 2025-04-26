@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container, 
-  Paper, 
   Typography, 
   Box, 
   Grid, 
@@ -32,6 +31,8 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import PersonIcon from '@mui/icons-material/Person';
 import TimerIcon from '@mui/icons-material/Timer';
 import { getAuctionById, placeBid } from '../services/api';
+import { webSocketService } from '../services/websocket.service';
+import { Bid } from '../types/auction';
 
 // Helper function to format time
 const formatTimeRemaining = (milliseconds: number) => {
@@ -59,7 +60,7 @@ export const AuctionDetail: React.FC = () => {
   const [snackbar, setSnackbar] = React.useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
+    severity: 'success' | 'error' | 'info';
   }>({
     open: false,
     message: '',
@@ -71,8 +72,51 @@ export const AuctionDetail: React.FC = () => {
   const { data: auction, isLoading } = useQuery({
     queryKey: ['auction', id],
     queryFn: () => getAuctionById(id),
-    refetchInterval: 10000, // Refetch every 10 seconds to keep bids updated
+    refetchInterval: 10000, // We can reduce this since we'll get real-time updates
   });
+
+  // Connect to WebSocket and join the auction room when the component mounts
+  useEffect(() => {
+    if (id) {
+      const socket = webSocketService.connect();
+      webSocketService.joinAuction(Number(id));
+      
+      // Listen for new bids
+      webSocketService.onNewBid((newBid: Bid) => {
+        // Update the auction data with the new bid
+        queryClient.setQueryData(['auction', id], (oldData: any) => {
+          if (!oldData) return oldData;
+          
+          // Check if this bid is already in our list (to prevent duplicates)
+          const bidExists = oldData.bids.some((bid: Bid) => bid.id === newBid.id);
+          if (bidExists) return oldData;
+          
+          // Create a new array with the new bid at the start
+          const updatedBids = [newBid, ...oldData.bids];
+          
+          // Update the auction data
+          return {
+            ...oldData,
+            bids: updatedBids,
+            currentHighestBid: newBid.amount,
+          };
+        });
+        
+        // Show a notification for new bids from others
+        setSnackbar({
+          open: true,
+          message: `New bid of $${parseFloat(newBid.amount).toFixed(2)} by ${newBid.username}!`,
+          severity: 'info'
+        });
+      });
+      
+      // Clean up when component unmounts
+      return () => {
+        webSocketService.leaveAuction(Number(id));
+        webSocketService.removeNewBidListener();
+      };
+    }
+  }, [id, queryClient]);
 
   // Update countdown timer every second
   useEffect(() => {
