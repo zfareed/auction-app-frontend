@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { AuctionResponse, AuctionDetail } from '../types/auction';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "https://auction-app-backend-7qzc.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL

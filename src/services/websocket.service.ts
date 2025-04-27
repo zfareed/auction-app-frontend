@@ -7,7 +7,7 @@ class WebSocketService {
   connect() {
     if (!this.connected) {
       // Connect to the same URL as the backend but on the WebSocket port
-      const SOCKET_URL = import.meta.env.VITE_API_URL;
+      const SOCKET_URL = import.meta.env.VITE_API_URL || "https://auction-app-backend-7qzc.onrender.com";
 
       this.socket = io(SOCKET_URL, {
         transports: ['websocket'],
