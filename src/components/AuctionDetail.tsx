@@ -78,7 +78,7 @@ export const AuctionDetail: React.FC = () => {
   // Connect to WebSocket and join the auction room when the component mounts
   useEffect(() => {
     if (id) {
-      const socket = webSocketService.connect();
+      webSocketService.connect();
       webSocketService.joinAuction(Number(id));
       
       // Listen for new bids
@@ -236,9 +236,8 @@ export const AuctionDetail: React.FC = () => {
           Back to Auctions
         </Button>
         
-
         <Grid container spacing={4}>
-          <Grid item xs={12} md={8}>
+          <Grid component="div" item xs={12} md={8}>
             <Card 
               elevation={3} 
               sx={{ 
@@ -349,7 +348,7 @@ export const AuctionDetail: React.FC = () => {
                             </Typography>
                           </Box>
                         </Grid>
-                        <Grid item xs={3}>
+                        <Grid item xs={3} component="div">
                           <Box sx={{ 
                             bgcolor: 'white', 
                             p: 1, 
@@ -364,7 +363,7 @@ export const AuctionDetail: React.FC = () => {
                             </Typography>
                           </Box>
                         </Grid>
-                        <Grid item xs={3}>
+                        <Grid item xs={3} component="div">
                           <Box sx={{ 
                             bgcolor: 'white', 
                             p: 1, 
@@ -379,7 +378,7 @@ export const AuctionDetail: React.FC = () => {
                             </Typography>
                           </Box>
                         </Grid>
-                        <Grid item xs={3}>
+                        <Grid item xs={3} component="div">
                           <Box sx={{ 
                             bgcolor: 'white', 
                             p: 1, 
@@ -528,7 +527,7 @@ export const AuctionDetail: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid component="div" item xs={12} md={4}>
             <Card 
               elevation={3} 
               sx={{ 

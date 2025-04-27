@@ -7,7 +7,9 @@ class WebSocketService {
   connect() {
     if (!this.connected) {
       // Connect to the same URL as the backend but on the WebSocket port
-      this.socket = io('http://localhost:3000', {
+      const SOCKET_URL = import.meta.env.VITE_API_URL;
+
+      this.socket = io(SOCKET_URL, {
         transports: ['websocket'],
         withCredentials: true,
       });
