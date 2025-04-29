@@ -19,7 +19,11 @@ import {
   Chip,
   Card,
   CardContent,
-  LinearProgress
+  LinearProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,7 +34,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import PersonIcon from '@mui/icons-material/Person';
 import TimerIcon from '@mui/icons-material/Timer';
-import { getAuctionById, placeBid } from '../services/api';
+import { getAuctionById, placeBid, getUsers } from '../services/api';
 import { webSocketService } from '../services/websocket.service';
 import { Bid } from '../types/auction';
 
@@ -66,6 +70,8 @@ export const AuctionDetail: React.FC = () => {
     message: '',
     severity: 'success'
   });
+  const [users, setUsers] = useState<Array<{id: number, username: string, email: string}>>([]);
+  const [selectedUser, setSelectedUser] = useState<number | ''>('');
   
   const queryClient = useQueryClient();
 
@@ -74,6 +80,24 @@ export const AuctionDetail: React.FC = () => {
     queryFn: () => getAuctionById(id),
     refetchInterval: 10000, // We can reduce this since we'll get real-time updates
   });
+
+  // Fetch users when component mounts
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const fetchedUsers = await getUsers();
+        setUsers(fetchedUsers);
+        // Set the first user as default if available
+        if (fetchedUsers.length > 0) {
+          setSelectedUser(fetchedUsers[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
 
   // Connect to WebSocket and join the auction room when the component mounts
   useEffect(() => {
@@ -146,7 +170,7 @@ export const AuctionDetail: React.FC = () => {
   }, [auction, id, queryClient]);
 
   const bidMutation = useMutation({
-    mutationFn: (amount: number) => placeBid(Number(id), amount),
+    mutationFn: (amount: number) => placeBid(Number(id), amount, selectedUser),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auction', id] });
       setBidAmount('');
@@ -552,6 +576,30 @@ export const AuctionDetail: React.FC = () => {
                 </Typography>
                 
                 <Stack spacing={3}>
+                  {/* User Selection Dropdown */}
+                  <FormControl fullWidth>
+                    <InputLabel id="user-select-label">Bidding As</InputLabel>
+                    <Select
+                      labelId="user-select-label"
+                      id="user-select"
+                      value={selectedUser}
+                      label="Bidding As"
+                      onChange={(e) => setSelectedUser(e.target.value as number)}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {users.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Avatar sx={{ mr: 1, width: 24, height: 24, bgcolor: theme.palette.primary.main }}>
+                              <PersonIcon fontSize="small" />
+                            </Avatar>
+                            {user.username}
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  
                   <Box sx={{ 
                     p: 2, 
                     bgcolor: theme.palette.grey[50], 
@@ -620,7 +668,8 @@ export const AuctionDetail: React.FC = () => {
                         disabled={
                           bidMutation.isPending || 
                           !bidAmount || 
-                          parseFloat(bidAmount) <= parseFloat(auction.currentHighestBid)
+                          parseFloat(bidAmount) <= parseFloat(auction.currentHighestBid) ||
+                          selectedUser === ''
                         }
                         onClick={handleBidSubmit}
                         sx={{ 

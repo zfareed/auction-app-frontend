@@ -39,3 +39,9 @@ export const addAuctionItem = async (item: NewAuctionItem): Promise<any> => {
   const response = await api.post('/items', item);
   return response.data;
 };
+
+// Add this function to fetch users
+export const getUsers = async () => {
+  const response = await api.get('/users');
+  return response.data;
+};
