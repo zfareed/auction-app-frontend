@@ -1,54 +1,120 @@
-# React + TypeScript + Vite
+# Auction App Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A real-time auction platform that allows users to see auction items, view detailed information about auction item and place bids with live updates.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Browse active auction listings  
+- View detailed information about auction items including current highest bid  
+- Real-time bid updates via WebSockets  
+- Place bids on active auctions  
+- Auction countdown timers  
+- Add new auction item
 
-## Expanding the ESLint configuration
+## Technologies Used
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 18 with TypeScript  
+- Material UI for component styling  
+- TanStack React Query for data fetching  
+- Socket.IO for real-time WebSocket communication  
+- React Router for navigation  
+- Date-fns for date manipulation  
+- Vite as build tool  
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+
+
+## API Integration
+
+The application connects to a backend API for all data operations. Key endpoints include:
+
+- `GET /items` - Fetch all auction items  
+- `GET /items/:id` - Fetch details for a specific auction  
+- `POST /bids` - Place a bid on an auction item  
+- `POST /items` - Create a new auction item  
+
+## WebSocket Integration
+
+Real-time features are implemented using Socket.IO. The app:
+
+- Connects to the WebSocket server on component mount  
+- Joins auction-specific rooms for targeted updates  
+- Listens for new bid events to update the UI in real-time  
+- Disconnects properly when components unmount  
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v20 or later)
+- npm (v9 or later)
+
+### Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/zfareed/auction-app-frontend
+   cd auction-app
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file in the root directory with the following variables:
+
+   ```env
+   VITE_API_URL=auction-app-backend-url
+   ```
+### Running the Application
+
+#### Development Mode
+
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will start in development mode and be available at `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+#### Production Build
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run build
 ```
+
+This will create an optimized production build in the `dist` directory.
+
+
+You can also run the application using Docker:
+
+1. Build the Docker image:
+
+   ```bash
+   docker build -t auction-app-frontend --build-arg VITE_API_URL=auction-app-backend-url .
+   ```
+
+2. Run the container:
+
+   ```bash
+   docker run -p 5173:80 auction-app-frontend
+   ```
+
+The application will be available at `http://localhost:5173`.
+
+
+## CI/CD Pipeline
+
+The application is set up with a continuous integration and deployment pipeline using GitHub Actions.
+
+### Pipeline Configuration
+
+The CI/CD pipeline is configured in `.github/workflows/frontend-deploy.yml` with the following functionality:
+
+- **Trigger**: The pipeline runs automatically on code pushes to the `master` branch
+- **Deployment**: The application is deployed to Render using a deploy webhook
+
+### Running the Pipeline
+
+The pipeline runs automatically when code is pushed to the master branch. No manual steps are required.
